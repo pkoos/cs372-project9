@@ -1,8 +1,4 @@
 import threading
-import time
-
-func_iterations = 0
-total_iterations = 0
 
 ranges = [
     [10, 20],
@@ -14,42 +10,25 @@ ranges = [
 
 # ranges = [
 #     [1, 65535],
-#     # [1, 20 * 10 ** 7],
+#     [1, 20 * 10 ** 7],
 #     [20 * 10 ** 1, 20 * 10 ** 7 ],
 #     [1, 2 ** 16]
 # ]
 
-def increment_iterations(function):
-    print(f"increment_iterations")
-    
-    def inner(argument):
-        global func_iterations
-        func_iterations += 1
-        return function(argument)
-    
-    return inner
-
 def runner(results, my_range, thread_num, func_name):
-    global func_iterations, total_iterations
-    func_iterations = 0
     result = func_name(my_range)
-    print(f"Thread {thread_num}: {my_range} -> {result} calls: {func_iterations}")
+    print(f"Thread {thread_num}: {my_range} -> {result}")
     results.append(result)
-    total_iterations += func_iterations
 
 def add_range(num_range):
-    global func_iterations
     
     result = 0
     start, end = num_range[0], num_range[1]
     for num in range(start, end + 1):
-        # func_iterations += 1
         result += add_number(num)
-        # result += num
 
     return result
 
-@increment_iterations
 def add_number(second):
     return second
 
@@ -57,30 +36,35 @@ def add_number(second):
 def calculate_range_from_one(end_num):
     return (end_num * (end_num + 1)) // 2
 
-@increment_iterations
 def calculated_range(num_range):
-    # global func_iterations
-    # func_iterations += 1
-    
     start, end = num_range[0], num_range[1]
     return calculate_range_from_one(end) - calculate_range_from_one(start - 1) # start - 1 because not inclusive
 
-def main():
-    results = list()
+def create_threads(thread_data, results_data):
     threads = list()
-    for index, num_range in zip(range(len(ranges)), ranges):
-        threads.append(threading.Thread(target=runner, args=(results, num_range, index, add_range)))
-        # threads.append(threading.Thread(target=runner, args=(results, num_range, index, calculated_range)))
+    for index, num_range in zip(range(len(thread_data)), thread_data):
+        # threads.append(threading.Thread(target=runner, args=(results_data, num_range, index, add_range)))
+        threads.append(threading.Thread(target=runner, args=(results_data, num_range, index, calculated_range)))
+    
+    return threads
 
-    for thread in threads:
+def start_threads(thread_collection):
+    for thread in thread_collection:
         thread.start()
 
-    for thread in threads:
+def join_threads(thread_collection):
+    for thread in thread_collection:
         thread.join()
+
+def main():
+    results = list()
+    threads = create_threads(ranges, results)
+
+    start_threads(threads)
+    join_threads(threads)
     
     print(f"results before summing: {results}")
     print(f"sum of all results: {sum(results)}")
-    print(f"total number of iterations: {total_iterations}")
 
 if __name__ == "__main__":
     main()
